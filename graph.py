@@ -15,4 +15,5 @@ data = np.loadtxt(filename)
 # Gets x,y points for the histogram with 10 bins
 x,y = histog(data,8)
 plt.bar(x,y,align='center',width = x[1]-x[0]) # A bar chart
-plt.show()
+#plt.show()
+plt.savefig("graph.png")

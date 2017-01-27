@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define N 100
+// 100 es muy poco
+#define N 1000
 #define l 3.0
 #define ini 1
 #define fin 20
-#deifine filename "dist.data"
+#define filename "dist.data"
 
 /*
  *  Creates N random numbers between ini and fin according
@@ -18,7 +19,7 @@ int main(){
   int i;
   for(i=0;i<N;i+=0){
     //random x
-    float x = ini+(fin-ini)*rand()/((float)RAND_MAX);
+    float x = ini+(float)(fin-ini)*rand()/((float)RAND_MAX);
     // Probability of obtaining x
     float px = (1/l)*exp(-x/(l));
     // Probability auxiliar
