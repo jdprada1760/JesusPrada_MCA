@@ -1,16 +1,13 @@
 all: graph.png
 
-graph.png : dist.data
+graph.png: dist.data
 	python graph.py
-	rm -f *.dat
-
+	rm -f *.data
 dist.data: a.x
-  ./a.x
-  rm -f *.x
-
-a.x : dist.c
+	./a.x
+	rm -f *.x
+a.x: dist.c
 	cc -Wall dist.c -o a.x -lm
-
-clean :
-rm -f *.x
-rm -f *.data
+clean:
+	rm -f *.x
+	rm -f *.data
