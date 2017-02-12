@@ -41,12 +41,15 @@ int main()
 	y1 = m/2 + d/(h*2) - 1;
 	// Allocate memoria para V ( Guarda el potencial actual de la grid )
 	double **V = malloc(m*sizeof(double*));
+	double **Vtemp = malloc(m*sizeof(double*));
 	int a;
 	for( a = 0; a < m; a++ ){
 		V[a] = malloc(m*sizeof(double));
+		Vtemp[a] = malloc(m*sizeof(double));
 	}
 	// Initializes V
 	init(x0, x1, y0, y1, V);
+	init(x0, x1, y0, y1, Vtemp);
 	// Iteration over N
 	for( n = 0; n < N; n++ )
 	{	
@@ -59,11 +62,21 @@ int main()
 				// Verifica que no esté en las placas
 				if ( !( j >= x0 && j <= x1 && i == y0 ) && !( j >= x0 && j <= x1 && i == y1 ) )
 				{
-					average = (V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1])/4;
-					V[i][j] = average;
+					average = (V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1])/4.0;
+					// Lo guarda en una variable diferente par evitar conflictos de actualización
+					Vtemp[i][j] = average;
 				}
 			}
 		}
+		// Actualiza la matriz de posiciones
+		for( i=1; i < m-1; i++ )
+		{
+			for( j=1; j < m-1; j++ )
+			{
+				V[i][j] = Vtemp[i][j];
+			}
+		}
+
 	}
 	
 	for( i=0; i < m; i++ )
@@ -93,5 +106,7 @@ void init(int x0, int x1, int y0, int y1, double **array)
 	for( a = 0; a < m; a++ ){
 		array[0][a] = 0;
 		array[a][0] = 0;
+		array[m-1][a] = 0;
+		array[a][m-1] = 0;
 	}
 }
