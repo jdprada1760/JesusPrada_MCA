@@ -28,8 +28,9 @@ int main(int argc, char** argv)
 {
 	
 	double h = L/m;
-	// Gets world size
+	// Gets world size and rank
   	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	
 	/* 
 	 *  x0,x1  -> X posición de las placas
@@ -69,29 +70,71 @@ int main(int argc, char** argv)
 	// Iteration over N
 	for( n = 0; n < N; n++ )
 	{	
-		printf("%d\n",n);
-		// Empieza en 1 y termina en m-1 porque el contorno no cambia 		
-		for( i=1; i < m-1; i++ )
+		// printf("%d\n",n);
+		// Empieza en 1 y termina en s-1 porque el porque los extremos no se actualizan 		
+		for( i=1; i < s-1; i++ )
 		{
 			for( j=1; j < m-1; j++ )
 			{	
 				// Verifica que no esté en las placas
-				if ( !( j >= x0 && j <= x1 && i == y0 ) && !( j >= x0 && j <= x1 && i == y1 ) )
-				{
+				// Tamaño vertical de cada procesador (sin compartir)
+				int t = m/world_size;
+				// Deduce cual procesador contiene y0 e y1
+				int range0 = (int) floor(y0/t);
+				int range1 = (int) floor(y1/t);
+				// Punto auxiliar para saber cual procesador comparte
+				int p0 = y0 - t*range0;
+				int p1 = y1 - t*range1;
+				if ( (rank != range0) && (rank != range0-1) && (rank != range1) && (rank != range1-1) )
+				{	
 					average = (V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1])/4.0;
 					// Lo guarda en una variable diferente par evitar conflictos de actualización
 					Vtemp[i][j] = average;
 				}
+				else{
+					if( rank == range0 ){
+						if( !(( i == p0 ) && ( j >= x0 ) && ( j <= x1 ))){
+							average = (V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1])/4.0;
+							// Lo guarda en una variable diferente par evitar conflictos de actualización
+							Vtemp[i][j] = average;
+						}
+					}
+					else if( (rank == range0-1) && ((p0 == 0) || (p0 == 1)) ){
+						p0 = s-2+p0;
+						if( !(( i == p0 ) && ( j >= x0 ) && ( j <= x1 ))){
+							average = (V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1])/4.0;
+							// Lo guarda en una variable diferente par evitar conflictos de actualización
+							Vtemp[i][j] = average;
+						}
+					}
+					else if( rank == range1 ){
+						if( !(( i == p1 ) && ( j >= x0 ) && ( j <= x1 ))){
+							average = (V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1])/4.0;
+							// Lo guarda en una variable diferente par evitar conflictos de actualización
+							Vtemp[i][j] = average;
+						}
+					}
+					else if( (rank == range1-1) && ((p1 == 0) || (p1 == 1)) ){
+						p1 = s-2+p1;
+						if( !(( i == p1 ) && ( j >= x0 ) && ( j <= x1 ))){
+							average = (V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1])/4.0;
+							// Lo guarda en una variable diferente par evitar conflictos de actualización
+							Vtemp[i][j] = average;
+						}
+					}
+					
+				}
 			}
 		}
 		// Actualiza la matriz de posiciones
-		for( i=1; i < m-1; i++ )
+		for( i=1; i < s-1; i++ )
 		{
 			for( j=1; j < m-1; j++ )
 			{
 				V[i][j] = Vtemp[i][j];
 			}
 		}
+		
 
 	}
 	
@@ -137,8 +180,8 @@ void init(int x0, int x1, int y0, int y1, double **array)
 		// Tamaño vertical de cada procesador (sin compartir)
 		int t = m/world_size;
 		// Deduce cual procesador contiene y0 e y1
-		int range0 = (int) floor(y0/t);
-		int range1 = (int) floor(y1/t);
+		int range0 = (int) floor((y0+1)/t);
+		int range1 = (int) floor((y1+1)/t);
 		// Punto auxiliar para saber cual procesador comparte
 		int p0 = y0 - t*range0;
 		int p1 = y1 - t*range1;
@@ -151,21 +194,13 @@ void init(int x0, int x1, int y0, int y1, double **array)
 		}
 		// Si es 0 o 1 se comparte con el anterior procesador
 		if( p0 == 0 || p0 == 1 ){
-			// Si es el procesador 1, hay que considerar el cambio de tamaño al procesador 0
-			if( (rank == 0) && (range0 == 1)){
-				array[t-1+p0][a] = V0/2;	
-			}
-			else if( rank == range0 - 1 ){
-				array[t+p0][a] = V0/2;	
+			if( rank == range0 - 1 ){
+				array[s-2+p0][a] = V0/2;	
 			}
 		}
 		if( p1 == 0 || p1 == 1 ){
-			// Si es el procesador 1, hay que considerar el cambio de tamaño al procesador 0
-			if( (rank == 0) && (range1 == 1)){
-				array[t-1+p1][a] = V0/2;	
-			}
-			else if( rank == range1 - 1 ){
-				array[t+p1][a] = V0/2;	
+			if( rank == range1 - 1 ){
+				array[s-2+p1][a] = V0/2;	
 			}
 		}	
 		
