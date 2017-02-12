@@ -14,7 +14,6 @@
  *  
  */
 int L = 5, l = 2, d = 1, V0 = 100, m = 256, N, s;
-double h = L/m;
 
 /*
  * MPI Variables
@@ -27,6 +26,8 @@ double** allocateMem();
 
 int main(int argc, char** argv)
 {
+	
+	double h = L/m;
 	// Gets world size
   	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 	
@@ -103,6 +104,7 @@ int main(int argc, char** argv)
 	}
 	
 	// Libera memoria
+	int a;
 	for( a = 0; a < m; a++ ){
 		free(V[a]);
 	}
@@ -117,8 +119,7 @@ double** allocateMem(){
 	double **temp = malloc(s*sizeof(double*));
 	int a;
 	for( a = 0; a < s; a++ ){
-		V[a] = malloc(m*sizeof(double));
-		Vtemp[a] = malloc(m*sizeof(double));
+		temp[a] = malloc(m*sizeof(double));
 	}
 	return temp;
 }
@@ -144,6 +145,7 @@ void init(int x0, int x1, int y0, int y1, double **array)
 		// Actualiza dependiendo del rank
 		if(rank == range0){
 			array[p0][a] = V0/2;
+		}
 		if(rank == range1){
 			array[p1][a] = V0/2;
 		}
@@ -178,8 +180,8 @@ void init(int x0, int x1, int y0, int y1, double **array)
 		}		
 	}
 	for( a = 0; a < s; a++ ){
-		array[0][a] == 0;
-		array[m-1][a] == 0;
+		array[0][a] = 0;
+		array[m-1][a] = 0;
 	}
 }
 
